@@ -33,6 +33,10 @@ export function showHire(data: PortfolioData, theme: ThemeColors): void {
       console.log(`  ${colors.fg("Email:")} ${profile.email}`);
     }
 
+    if (profile.phone) {
+      console.log(`  ${colors.fg("Phone:")} ${profile.phone}`);
+    }
+
     if (profile.portfolioUrl) {
       console.log(`  ${colors.fg("Portfolio:")} ${profile.portfolioUrl}`);
     }

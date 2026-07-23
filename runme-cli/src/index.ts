@@ -17,10 +17,19 @@ import { showTimeline } from "./commands/timeline.js";
 import { showSettings, setTheme, setAnimation } from "./commands/settings.js";
 import { runDoctor } from "./commands/doctor.js";
 import { checkForUpdates } from "./commands/update.js";
-import { ThemeName, AnimationType } from "./types/index.js";
+import { ThemeName, AnimationType, ThemeColors, PortfolioData } from "./types/index.js";
 import readline from "readline";
 
 const VERSION = "1.0.0";
+
+function resolveTheme(data: PortfolioData, localConfig: { theme?: string }): ThemeColors {
+  const themeName = (localConfig.theme || data.theme?.lockedTheme || "cyberpunk") as ThemeName;
+  const base = getTheme(themeName);
+  if (data.theme?.customHexColor) {
+    return { ...base, accent: data.theme.customHexColor };
+  }
+  return base;
+}
 
 const program = new Command();
 
@@ -35,31 +44,37 @@ program
   .option("--no-animation", "Disable boot animation")
   .action(async (username, options) => {
     const config = loadConfig();
-    const themeName = (options.theme || config.theme || "cyberpunk") as ThemeName;
-    const theme = getTheme(themeName);
 
     if (!username) {
       username = config.username;
     }
 
     if (!username) {
+      const defaultTheme = getTheme("cyberpunk");
       console.log();
-      console.log(chalk.hex(theme.accent)("  Usage: npx @runme/cli <username>"));
-      console.log(chalk.dim("  Example: npx @runme/cli johndoe"));
+      console.log(chalk.hex(defaultTheme.accent)("  Usage: npx runme-cli <username>"));
+      console.log(chalk.dim("  Example: npx runme-cli johndoe"));
       console.log();
       return;
     }
 
-    if (options.animation !== false && config.animation) {
-      const greeting = `Welcome to ${username}'s portfolio`;
-      await animateText(greeting, config.animation as AnimationType, theme);
-    }
-
-    console.log(renderBanner(undefined, theme));
-    console.log();
-
     try {
       const data = await fetchPortfolio(username);
+
+      const theme = options.theme
+        ? getTheme(options.theme as ThemeName)
+        : resolveTheme(data, config);
+
+      const greeting = data.theme?.greeting || `Welcome to ${data.profile.name}'s portfolio`;
+      const bootAnim = (config.animation || data.theme?.bootAnimation || "typewriter") as AnimationType;
+
+      if (options.animation !== false && bootAnim) {
+        await animateText(greeting, bootAnim, theme);
+      }
+
+      const bannerText = data.theme?.asciiBanner || undefined;
+      console.log(renderBanner(bannerText, theme, data.theme?.gradientColor));
+      console.log();
 
       if (options.animation !== false) {
         await animateText(`Welcome to ${data.profile.name}'s portfolio`, "typewriter", theme);
@@ -72,9 +87,11 @@ program
       startInteractiveMode(data, theme);
     } catch (error) {
       if (error instanceof Error) {
-        console.log(chalk.hex(theme.error)(`  Error: ${error.message}`));
+        const errTheme = getTheme("cyberpunk");
+        console.log(chalk.hex(errTheme.error)(`  Error: ${error.message}`));
       } else {
-        console.log(chalk.hex(theme.error)("  An unexpected error occurred"));
+        const errTheme = getTheme("cyberpunk");
+        console.log(chalk.hex(errTheme.error)("  An unexpected error occurred"));
       }
       console.log();
     }
@@ -142,7 +159,8 @@ function clearScreen() {
 }
 
 function drawHeader(data: any, theme: any) {
-  console.log(renderBanner(undefined, theme));
+  const bannerText = data.theme?.asciiBanner || undefined;
+  console.log(renderBanner(bannerText, theme, data.theme?.gradientColor));
   console.log();
   console.log(renderSmallBanner(theme));
   console.log(chalk.dim(`  ${data.profile.title}`));

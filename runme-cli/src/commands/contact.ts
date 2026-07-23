@@ -32,6 +32,10 @@ export function showContact(data: PortfolioData, theme: ThemeColors): void {
     console.log(`  ${colors.accent("Portfolio:")} ${colors.fg(profile.portfolioUrl)}`);
   }
 
+  if (profile.timezone) {
+    console.log(`  ${colors.accent("Timezone:")} ${colors.fg(profile.timezone)}`);
+  }
+
   console.log();
   console.log(colors.muted("  " + symbols.line.repeat(40)));
 

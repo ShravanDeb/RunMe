@@ -40,6 +40,10 @@ export function showAbout(data: PortfolioData, theme: ThemeColors): void {
     console.log(`  ${symbols.pin || "📍"} ${colors.fg(profile.location)}`);
   }
 
+  if (profile.timezone) {
+    console.log(`  ${symbols.pin || "🕐"} ${colors.fg(profile.timezone)}`);
+  }
+
   if (profile.availableForHire) {
     console.log(`  ${symbols.check} ${colors.success("Available for hire")}`);
     if (profile.responseTime) {

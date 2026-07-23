@@ -46,6 +46,7 @@ export interface SkillCategory {
 export interface Theme {
   lockedTheme: "cyberpunk" | "dracula" | "gruvbox" | "nord" | "monokai" | "tokyonight";
   customHexColor?: string;
+  gradientColor?: string;
   asciiBanner?: string;
   bootAnimation?: string;
   greeting?: string;

@@ -5,7 +5,7 @@ import { symbols } from "../ui/symbols.js";
 import { loadConfig } from "../services/config.service.js";
 import axios from "axios";
 
-const API_BASE_URL = process.env.RUNME_API_URL || "https://api.runme.dev";
+const API_BASE_URL = process.env.RUNME_API_URL || "https://run-me-rose.vercel.app";
 
 export async function runDoctor(theme: ThemeColors): Promise<void> {
   const colors = createThemeColors(theme);

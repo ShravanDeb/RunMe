@@ -3,6 +3,13 @@ import { PortfolioData, ThemeColors } from "../types/index.js";
 import { createThemeColors } from "../ui/colors.js";
 import { symbols } from "../ui/symbols.js";
 
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
+    : null;
+}
+
 export function showProjects(data: PortfolioData, theme: ThemeColors): void {
   const colors = createThemeColors(theme);
   const { projects } = data;
@@ -20,7 +27,12 @@ export function showProjects(data: PortfolioData, theme: ThemeColors): void {
 
   projects.forEach((project, index) => {
     const num = colors.accent(`[${index + 1}]`);
-    console.log(`  ${num} ${colors.bold(project.title)}`);
+    let titleColor = colors.bold;
+    if (project.projectColor) {
+      const rgb = hexToRgb(project.projectColor);
+      if (rgb) titleColor = chalk.bold.rgb(rgb.r, rgb.g, rgb.b);
+    }
+    console.log(`  ${num} ${titleColor(project.title)}`);
 
     if (project.subtitle) {
       console.log(`      ${colors.muted(project.subtitle)}`);
