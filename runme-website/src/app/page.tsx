@@ -336,10 +336,6 @@ function LiveTerminal() {
     return () => clearInterval(t);
   }, [phase]);
 
-  useEffect(() => {
-    if (phase === "input") scrollBottom();
-  }, [headerLines, contentLines, welcomeText, scrollBottom, phase]);
-
   function processCommand(cmd: string) {
     const trimmed = cmd.trim().toLowerCase();
 
