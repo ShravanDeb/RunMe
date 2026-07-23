@@ -130,10 +130,10 @@ export async function GET(request: NextRequest) {
     // Redirect to dashboard with token in cookie
     const response = NextResponse.redirect(new URL("/profile", baseUrl));
     response.cookies.set("runme_token", token, {
-      httpOnly: true,
+      httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });
 
