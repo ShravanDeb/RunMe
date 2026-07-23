@@ -326,17 +326,6 @@ function LiveTerminal() {
     scrollBottom();
   }, [headerLines, contentLines, welcomeText, scrollBottom]);
 
-  useEffect(() => {
-    function focus(e: MouseEvent) {
-      const target = e.target as HTMLElement;
-      if (target.closest(".terminal-container")) {
-        inputRef.current?.focus();
-      }
-    }
-    document.addEventListener("click", focus);
-    return () => document.removeEventListener("click", focus);
-  }, []);
-
   function processCommand(cmd: string) {
     const trimmed = cmd.trim().toLowerCase();
 
