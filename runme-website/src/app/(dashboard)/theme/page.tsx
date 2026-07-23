@@ -451,24 +451,30 @@ export default function ThemePage() {
                   </button>
                 )}
               </div>
-              {config.customHexColor && (
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={config.gradientColor || "#8b5cf6"}
-                    onChange={(e) => setConfig({ ...config, gradientColor: e.target.value })}
-                    className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent"
-                  />
-                  <input
-                    type="text"
-                    value={config.gradientColor}
-                    onChange={(e) => setConfig({ ...config, gradientColor: e.target.value })}
-                    placeholder="Gradient (optional)"
-                    className="bg-surface border border-border rounded-md px-3 py-2 text-sm text-fg font-mono placeholder:text-muted/50 focus:outline-none focus:border-accent transition-colors w-36"
-                  />
-                  <span className="text-xs text-muted">gradient end</span>
-                </div>
-              )}
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={config.gradientColor || "#8b5cf6"}
+                  onChange={(e) => setConfig({ ...config, gradientColor: e.target.value })}
+                  className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent"
+                />
+                <input
+                  type="text"
+                  value={config.gradientColor}
+                  onChange={(e) => setConfig({ ...config, gradientColor: e.target.value })}
+                  placeholder="#8b5cf6"
+                  className="bg-surface border border-border rounded-md px-3 py-2 text-sm text-fg font-mono placeholder:text-muted/50 focus:outline-none focus:border-accent transition-colors w-36"
+                />
+                <span className="text-xs text-muted">gradient end</span>
+                {config.gradientColor && (
+                  <button
+                    onClick={() => setConfig({ ...config, gradientColor: "" })}
+                    className="text-xs text-muted hover:text-fg transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

@@ -9,6 +9,7 @@ export default function SettingsPage() {
   const [username, setUsername] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [refreshed, setRefreshed] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!getToken()) {
@@ -20,6 +21,24 @@ export default function SettingsPage() {
       .then((res) => setUsername(res.username))
       .catch(() => {});
   }, [router]);
+
+  async function copyCommand() {
+    const cmd = `npx runme-cli ${username}`;
+    try {
+      await navigator.clipboard.writeText(cmd);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = cmd;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }
 
   async function refreshGithub() {
     setRefreshing(true);
@@ -53,10 +72,19 @@ export default function SettingsPage() {
             Your portfolio command
           </h2>
           <div className="bg-surface border border-border rounded-lg p-4">
-            <code className="text-sm font-mono">
-              <span className="text-accent">npx runme-cli </span>
-              <span className="text-fg">{username || "..."}</span>
-            </code>
+            <div className="flex items-center justify-between gap-3">
+              <code className="text-sm font-mono">
+                <span className="text-accent">npx runme-cli </span>
+                <span className="text-fg">{username || "..."}</span>
+              </code>
+              <button
+                onClick={copyCommand}
+                disabled={!username}
+                className="shrink-0 bg-surface border border-border px-3 py-1.5 rounded-md text-xs text-fg hover:bg-border transition-colors disabled:opacity-50"
+              >
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
             <p className="text-xs text-muted mt-2">
               Share this command with anyone. They&apos;ll see your portfolio in their terminal.
             </p>
