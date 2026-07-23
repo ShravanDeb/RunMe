@@ -11,8 +11,8 @@ export async function GET(request: Request) {
 
   try {
     const db = getDb();
-    const doc = await db.collection("profiles").doc(decoded.userId).get();
-    if (!doc.exists) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+    const doc = await db.collection("users").doc(decoded.userId).get();
+    if (!doc.exists) return NextResponse.json({ error: "User not found" }, { status: 404 });
     return NextResponse.json(doc.data());
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -30,27 +30,23 @@ export async function PUT(request: Request) {
     const db = getDb();
     const body = await request.json();
 
-    const profileData = {
-      userId: decoded.userId,
-      name: body.name,
-      title: body.title,
-      bio: body.bio,
-      phone: body.phone,
-      githubUrl: body.githubUrl,
-      linkedinUrl: body.linkedinUrl,
-      portfolioUrl: body.portfolioUrl,
-      location: body.location,
-      availableForHire: body.availableForHire,
-      responseTime: body.responseTime,
-      timezone: body.timezone,
-      updatedAt: new Date(),
-    };
-
-    await db.collection("profiles").doc(decoded.userId).set(profileData, { merge: true });
-
-    if (body.email) {
-      await db.collection("users").doc(decoded.userId).update({ email: body.email, updatedAt: new Date() });
-    }
+    await db.collection("users").doc(decoded.userId).set(
+      {
+        name: body.name,
+        title: body.title,
+        bio: body.bio,
+        location: body.location,
+        website: body.website,
+        github: body.github,
+        linkedin: body.linkedin,
+        phone: body.phone,
+        availableForHire: body.availableForHire,
+        responseTime: body.responseTime,
+        timezone: body.timezone,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
 
     return NextResponse.json({ message: "Profile updated" });
   } catch {

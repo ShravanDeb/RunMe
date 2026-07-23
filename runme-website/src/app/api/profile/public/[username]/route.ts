@@ -12,7 +12,7 @@ export async function GET(
     if (userSnapshot.empty) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     const userId = userSnapshot.docs[0].id;
-    const profileDoc = await db.collection("profiles").doc(userId).get();
+    const profileDoc = await db.collection("users").doc(userId).get();
     if (!profileDoc.exists) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
     return NextResponse.json(profileDoc.data());

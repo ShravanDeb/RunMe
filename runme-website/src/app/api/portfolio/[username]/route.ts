@@ -16,7 +16,7 @@ export async function GET(
     const userId = userSnapshot.docs[0].id;
 
     const [profileDoc, projectsSnap, experienceSnap, skillsSnap, themeDoc, githubDoc] = await Promise.all([
-      db.collection("profiles").doc(userId).get(),
+      db.collection("users").doc(userId).get(),
       db.collection("projects").where("userId", "==", userId).get(),
       db.collection("experience").where("userId", "==", userId).get(),
       db.collection("skills").where("userId", "==", userId).get(),
@@ -33,10 +33,10 @@ export async function GET(
     const portfolio: PortfolioData = {
       profile: {
         name: profile.name || "", title: profile.title || "", bio: profile.bio || "",
-        email: profile.email || "", phone: profile.phone, githubUrl: profile.githubUrl,
-        linkedinUrl: profile.linkedinUrl, portfolioUrl: profile.portfolioUrl,
-        location: profile.location, availableForHire: profile.availableForHire || false,
-        responseTime: profile.responseTime, timezone: profile.timezone,
+        email: profile.email || "", phone: profile.phone || "", githubUrl: profile.github || "",
+        linkedinUrl: profile.linkedin || "", portfolioUrl: profile.website || "",
+        location: profile.location || "", availableForHire: profile.availableForHire || false,
+        responseTime: profile.responseTime || "", timezone: profile.timezone || "",
       },
       projects: projectsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as PortfolioData["projects"][0])),
       experience: experienceSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as PortfolioData["experience"][0])),

@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
   try {
     const db = getDb();
-    const profileDoc = await db.collection("profiles").doc(decoded.userId).get();
+    const profileDoc = await db.collection("users").doc(decoded.userId).get();
     const profile = profileDoc.data();
 
     if (!profile?.githubUrl) {
