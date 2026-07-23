@@ -265,15 +265,29 @@ function LiveTerminal() {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
-  const [phase, setPhase] = useState<"banner" | "welcome" | "menu" | "input">("banner");
+  const [phase, setPhase] = useState<"idle" | "banner" | "welcome" | "menu" | "input">("idle");
   const [bannerLine, setBannerLine] = useState(0);
   const [welcomeText, setWelcomeText] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const scrollBottom = useCallback(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
+  // Start animation only when terminal is fully in viewport
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || phase !== "idle") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setPhase("banner");
+          observer.disconnect();
+        }
+      },
+      { threshold: 1.0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [phase]);
 
   // Boot: banner lines go into HEADER (permanent)
   useEffect(() => {
@@ -386,7 +400,7 @@ function LiveTerminal() {
   ];
 
   return (
-    <div className="terminal-container rounded-lg border border-border overflow-hidden shadow-2xl font-mono text-xs leading-tight" style={{ background: "#0a0a0f" }}>
+    <div ref={containerRef} className="terminal-container rounded-lg border border-border overflow-hidden shadow-2xl font-mono text-xs leading-tight" style={{ background: "#0a0a0f" }}>
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border" style={{ background: "#111115" }}>
         <div className="w-3 h-3 rounded-full" style={{ background: "#ff0040" }} />
         <div className="w-3 h-3 rounded-full" style={{ background: "#ffaa00" }} />
