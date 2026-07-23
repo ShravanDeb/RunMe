@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -28,25 +28,68 @@ interface ThemeConfig {
 }
 
 const BANNER_TEXT = "Run Me";
+const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*";
 
 function generateAscii(text: string): string[] {
-  const chars: Record<string, string[]> = {
-    " ": ["   ", "   ", "   ", "   ", "   "],
-    R: ["█▀█", "█▀▀", "██▀", "█ █", "█ █"],
-    u: ["   ", "█ █", "███", "  █", "███"],
-    n: ["   ", "   ", "█▀▄", "█ █", "▀ █"],
-    M: ["█   █", "█▄▄▄█", "█   █", "█   █", "█   █"],
-    e: ["   ", "   ", "█▀▄", "██▄", "  ▀"],
+  const font: Record<string, string[]> = {
+    " ": ["    ","    ","    ","    ","    ","    ","    "],
+    A: ["  ██  ","██████","██  ██","██████","██  ██","██  ██","      "],
+    B: ["█████ ","██  ██","█████ ","██  ██","██  ██","█████ ","      "],
+    C: [" ████ ","██    ","██    ","██    ","██    "," ████ ","      "],
+    D: ["████  ","██  ██","██  ██","██  ██","██  ██","████  ","      "],
+    E: ["██████","██    ","█████ ","██    ","██    ","██████","      "],
+    F: ["██████","██    ","█████ ","██    ","██    ","██    ","      "],
+    G: [" ████ ","██    ","██ ███","██  ██","██  ██"," ████ ","      "],
+    H: ["██  ██","██  ██","██████","██  ██","██  ██","██  ██","      "],
+    I: ["██████","  ██  ","  ██  ","  ██  ","  ██  ","██████","      "],
+    J: ["██████","    ██","    ██","    ██","██  ██"," ████ ","      "],
+    K: ["██  ██","██ ██ ","████  ","██ ██ ","██  ██","██  ██","      "],
+    L: ["██    ","██    ","██    ","██    ","██    ","██████","      "],
+    M: ["██   ██","███ ███","██ █ ██","██   ██","██   ██","██   ██","       "],
+    N: ["██  ██","███ ██","██████","██ ███","██  ██","██  ██","       "],
+    O: [" ████ ","██  ██","██  ██","██  ██","██  ██"," ████ ","      "],
+    P: ["█████ ","██  ██","█████ ","██    ","██    ","██    ","      "],
+    Q: [" ████ ","██  ██","██  ██","██ ███","██  ██"," ████ ","      "],
+    R: ["█████ ","██  ██","█████ ","██ ██ ","██  ██","██  ██","      "],
+    S: [" ████ ","██    "," ███  ","    ██","    ██","████  ","      "],
+    T: ["██████","  ██  ","  ██  ","  ██  ","  ██  ","  ██  ","      "],
+    U: ["██  ██","██  ██","██  ██","██  ██","██  ██"," ████ ","      "],
+    V: ["██  ██","██  ██","██  ██","██  ██"," ████ ","  ██  ","      "],
+    W: ["██   ██","██   ██","██   ██","██ █ ██","███ ███","██   ██","       "],
+    X: ["██  ██"," ████ ","  ██  "," ████ ","██  ██","██  ██","      "],
+    Y: ["██  ██"," ████ ","  ██  ","  ██  ","  ██  ","  ██  ","      "],
+    Z: ["██████","    ██","  ██  "," ██   ","██    ","██████","      "],
+    0: [" ████ ","██  ██","██  ██","██  ██","██  ██"," ████ ","      "],
+    1: ["  ██  "," ███  ","  ██  ","  ██  ","  ██  ","██████","      "],
+    2: [" ████ ","██  ██","    ██","  ███ ","██    ","██████","      "],
+    3: [" ████ ","██  ██","  ███ ","    ██","██  ██"," ████ ","      "],
+    4: ["██  ██","██  ██","██████","    ██","    ██","    ██","      "],
+    5: ["██████","██    ","█████ ","    ██","██  ██"," ████ ","      "],
+    6: [" ████ ","██    ","█████ ","██  ██","██  ██"," ████ ","      "],
+    7: ["██████","    ██","   ██ ","  ██  ","  ██  ","  ██  ","      "],
+    8: [" ████ ","██  ██"," ████ ","██  ██","██  ██"," ████ ","      "],
+    9: [" ████ ","██  ██"," █████","    ██","    ██"," ████ ","      "],
   };
-  const lines: string[] = ["", "", "", "", ""];
-  for (const ch of text.toUpperCase()) {
-    const glyph = chars[ch] || chars[" "];
-    for (let i = 0; i < 5; i++) {
-      lines[i] += (glyph[i] || "   ") + " ";
+  const lines: string[] = ["","","","","","",""];
+  for (const ch of text) {
+    const glyph = font[ch] || font[ch.toUpperCase()] || font[" "];
+    for (let i = 0; i < 7; i++) {
+      lines[i] += (glyph[i] || "      ") + " ";
     }
   }
   return lines;
 }
+
+function scrambleText(text: string, progress: number): string {
+  return text.split("").map((ch, i) => {
+    if (ch === " ") return " ";
+    const threshold = i / text.length;
+    if (progress > threshold + 0.3) return ch;
+    return CHARS[Math.floor(Math.random() * CHARS.length)];
+  }).join("");
+}
+
+const rainbowColors = ["#ff0000","#ff7700","#ffff00","#00ff00","#0077ff","#8800ff","#ff00ff"];
 
 function ThemePreview({ config }: { config: ThemeConfig }) {
   const theme = THEMES.find((t) => t.id === config.lockedTheme) || THEMES[0];
@@ -56,21 +99,179 @@ function ThemePreview({ config }: { config: ThemeConfig }) {
   const muted = theme.muted;
   const bg = theme.bg;
   const bannerLines = useMemo(() => generateAscii(config.asciiBanner || BANNER_TEXT), [config.asciiBanner]);
+  const anim = config.animation;
 
-  const [visibleLines, setVisibleLines] = useState(0);
+  const totalLines = bannerLines.length + 5 + 7;
+  const [tick, setTick] = useState(0);
   const [animKey, setAnimKey] = useState(0);
+  const [glitchOffset, setGlitchOffset] = useState(0);
 
   useEffect(() => {
-    setVisibleLines(0);
+    setTick(0);
     setAnimKey((k) => k + 1);
-    let i = 0;
+    let t = 0;
+    const speed = anim === "matrix" ? 60 : anim === "wave" ? 100 : 80;
     const interval = setInterval(() => {
-      i++;
-      setVisibleLines(i);
-      if (i >= bannerLines.length + 8) clearInterval(interval);
-    }, 120);
+      t++;
+      setTick(t);
+      if (t > totalLines + 10) clearInterval(interval);
+    }, speed);
     return () => clearInterval(interval);
-  }, [config.lockedTheme, config.customHexColor, config.gradientColor, config.asciiBanner, config.animation]);
+  }, [anim, config.lockedTheme, config.customHexColor, config.gradientColor, config.asciiBanner]);
+
+  useEffect(() => {
+    if (anim !== "glitch") return;
+    const interval = setInterval(() => {
+      setGlitchOffset(Math.random() > 0.7 ? (Math.random() * 6 - 3) : 0);
+    }, 100);
+    return () => clearInterval(interval);
+  }, [anim]);
+
+  const getLineVisible = useCallback((lineIndex: number): boolean => {
+    switch (anim) {
+      case "typewriter": return tick > lineIndex * 2;
+      case "matrix": return tick > lineIndex * 1.5;
+      case "wave": {
+        const wave = Math.sin((tick - lineIndex) * 0.5);
+        return tick > lineIndex * 1.8 && wave > -0.3;
+      }
+      case "fadeIn": return tick > 5;
+      case "scanLine": {
+        const scanPos = (tick * 3) % (totalLines + 10);
+        return lineIndex < scanPos;
+      }
+      case "decrypt": return tick > lineIndex * 2;
+      case "neonGlow": return tick > lineIndex * 1.5;
+      case "bounceIn": return tick > lineIndex * 1.2;
+      case "slideIn": return tick > lineIndex * 1.5;
+      case "colorCycle": return tick > lineIndex * 2;
+      case "pixelate": return tick > lineIndex * 2;
+      case "typewriterDelete": return tick > lineIndex * 2 && tick < totalLines + 8;
+      case "fire": return tick > lineIndex * 1.5;
+      case "rainbowWave": return tick > lineIndex * 2;
+      default: return tick > lineIndex * 2;
+    }
+  }, [tick, anim, totalLines]);
+
+  const getLineStyle = useCallback((lineIndex: number): React.CSSProperties => {
+    const base: React.CSSProperties = {};
+
+    switch (anim) {
+      case "typewriter":
+        base.transition = "opacity 0.1s";
+        break;
+      case "matrix":
+        base.transition = "opacity 0.15s, color 0.3s";
+        break;
+      case "wave":
+        base.transition = `transform 0.3s ease ${(lineIndex * 0.05)}s, opacity 0.3s`;
+        if (!getLineVisible(lineIndex)) base.transform = "translateY(10px)";
+        break;
+      case "fadeIn":
+        base.transition = `opacity 0.6s ease ${(lineIndex * 0.1)}s`;
+        break;
+      case "scanLine":
+        base.transition = "opacity 0.05s";
+        break;
+      case "decrypt":
+        base.transition = "opacity 0.2s";
+        break;
+      case "neonGlow":
+        if (getLineVisible(lineIndex)) {
+          base.textShadow = `0 0 8px ${accent}, 0 0 16px ${accent}40`;
+          base.transition = "text-shadow 0.5s, opacity 0.3s";
+        }
+        break;
+      case "bounceIn": {
+        const bounce = getLineVisible(lineIndex) ? "translateY(0)" : "translateY(-20px)";
+        base.transition = `transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${(lineIndex * 0.06)}s`;
+        if (!getLineVisible(lineIndex)) base.transform = bounce;
+        break;
+      }
+      case "slideIn":
+        base.transition = `transform 0.3s ease ${(lineIndex * 0.06)}s, opacity 0.3s`;
+        if (!getLineVisible(lineIndex)) { base.transform = "translateX(-30px)"; base.opacity = 0; }
+        break;
+      case "colorCycle":
+        if (getLineVisible(lineIndex)) {
+          const colorIdx = Math.floor((tick * 0.3 + lineIndex) % rainbowColors.length);
+          base.color = rainbowColors[colorIdx];
+        }
+        break;
+      case "pixelate":
+        base.transition = "opacity 0.2s";
+        if (getLineVisible(lineIndex) && tick < lineIndex * 2 + 8) {
+          base.filter = `blur(${Math.max(0, 4 - (tick - lineIndex * 2))}px)`;
+        }
+        break;
+      case "typewriterDelete":
+        base.transition = "opacity 0.1s";
+        break;
+      case "fire":
+        if (getLineVisible(lineIndex)) {
+          base.textShadow = `0 0 6px #ff4400, 0 0 12px #ff220060`;
+          const flicker = Math.random() > 0.5 ? 1 : 0.85;
+          base.opacity = flicker;
+        }
+        break;
+      case "rainbowWave":
+        if (getLineVisible(lineIndex)) {
+          const colorIdx = Math.floor((lineIndex + tick * 0.2) % rainbowColors.length);
+          base.color = rainbowColors[colorIdx];
+          base.transition = "color 0.2s";
+        }
+        break;
+      case "glitch":
+        if (getLineVisible(lineIndex)) {
+          base.transition = "transform 0.05s";
+          if (Math.random() > 0.9) base.transform = `translateX(${Math.random() * 4 - 2}px)`;
+        }
+        break;
+    }
+    return base;
+  }, [anim, tick, accent, getLineVisible]);
+
+  const getMenuText = useCallback((lineIndex: number, text: string): string => {
+    if (!getLineVisible(lineIndex)) return "";
+    if (anim === "decrypt") {
+      const progress = Math.min(1, Math.max(0, (tick - lineIndex * 2) / 8));
+      return scrambleText(text, progress);
+    }
+    if (anim === "typewriterDelete") {
+      const phase = tick - lineIndex * 2;
+      if (phase < 0) return "";
+      if (phase < text.length) return text.slice(0, phase);
+      const deleteStart = totalLines;
+      if (tick > deleteStart + lineIndex) {
+        const deleted = Math.min(text.length, tick - deleteStart - lineIndex);
+        return text.slice(0, text.length - deleted);
+      }
+      return text;
+    }
+    if (anim === "matrix") {
+      const age = tick - lineIndex * 1.5;
+      if (age < 3) return text.split("").map(() => CHARS[Math.floor(Math.random() * CHARS.length)]).join("");
+      return text;
+    }
+    return text;
+  }, [anim, tick, getLineVisible, totalLines]);
+
+  const getBannerText = useCallback((lineIndex: number, line: string): string => {
+    if (!getLineVisible(lineIndex)) return "";
+    if (anim === "matrix") {
+      const age = tick - lineIndex * 1.5;
+      if (age < 5) return line.replace(/./g, () => CHARS[Math.floor(Math.random() * CHARS.length)]);
+    }
+    if (anim === "decrypt") {
+      const progress = Math.min(1, Math.max(0, (tick - lineIndex * 2) / 10));
+      return line.replace(/[^\s]/g, (ch, offset) => {
+        const charThreshold = offset / line.length;
+        if (progress > charThreshold + 0.4) return ch;
+        return CHARS[Math.floor(Math.random() * CHARS.length)];
+      });
+    }
+    return line;
+  }, [anim, tick, getLineVisible]);
 
   const menuItems = [
     "[1] About Me - Who I am and what I do",
@@ -82,10 +283,65 @@ function ThemePreview({ config }: { config: ThemeConfig }) {
     "[7] Hire Me - Availability and rates",
   ];
 
+  const allContent = [
+    ...bannerLines.map((_, i) => ({ type: "banner" as const, index: i })),
+    { type: "space" as const, index: bannerLines.length },
+    { type: "runme" as const, index: bannerLines.length + 1 },
+    { type: "space2" as const, index: bannerLines.length + 2 },
+    { type: "line" as const, index: bannerLines.length + 3 },
+    ...menuItems.map((_, i) => ({ type: "menu" as const, index: bannerLines.length + 4 + i })),
+    { type: "line2" as const, index: bannerLines.length + 4 + menuItems.length },
+    { type: "input" as const, index: bannerLines.length + 5 + menuItems.length },
+  ];
+
+  const renderLine = (item: typeof allContent[0]) => {
+    const visible = getLineVisible(item.index);
+    const lineStyle = getLineStyle(item.index);
+    const opacity = visible ? 1 : 0;
+
+    switch (item.type) {
+      case "banner":
+        return (
+          <div key={item.index} style={{ ...lineStyle, color: accent, opacity, whiteSpace: "pre" }}>
+            {gradient ? (
+              <span style={{
+                backgroundImage: `linear-gradient(90deg, ${accent}, ${gradient})`,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}>{getBannerText(item.index, bannerLines[item.index])}</span>
+            ) : getBannerText(item.index, bannerLines[item.index])}
+          </div>
+        );
+      case "space":
+        return <div key={item.index} style={{ opacity }}>&nbsp;</div>;
+      case "runme":
+        return <div key={item.index} style={{ ...lineStyle, color: accent, opacity }}>▶ RUNME</div>;
+      case "space2":
+        return <div key={item.index} style={{ opacity }}>&nbsp;</div>;
+      case "line":
+      case "line2":
+        return <div key={item.index} style={{ ...lineStyle, color: muted, opacity }}>────────────────────────────────────────</div>;
+      case "menu":
+        const menuIdx = item.index - bannerLines.length - 4;
+        return (
+          <div key={item.index} style={{ ...lineStyle, color: fg, opacity, whiteSpace: "pre" }}>
+            {getMenuText(item.index, menuItems[menuIdx])}
+          </div>
+        );
+      case "input":
+        return (
+          <div key={item.index} style={{ opacity }}>
+            <span style={{ color: accent }}>❯</span>{" "}
+            <span style={{ color: fg }}>{anim === "typewriter" && tick > item.index ? "_" : ""}</span>
+          </div>
+        );
+    }
+  };
+
   return (
     <div
       key={animKey}
-      className="rounded-lg border border-border overflow-hidden text-xs font-mono leading-relaxed"
+      className="rounded-lg border border-border overflow-hidden text-[11px] font-mono leading-tight"
       style={{ backgroundColor: bg }}
     >
       <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/50">
@@ -94,49 +350,8 @@ function ThemePreview({ config }: { config: ThemeConfig }) {
         <div className="w-2.5 h-2.5 rounded-full bg-success/60" />
         <span className="ml-2 text-[10px]" style={{ color: muted }}>terminal</span>
       </div>
-      <div className="p-3 space-y-0.5">
-        {bannerLines.map((line, i) => (
-          <div
-            key={i}
-            className={cn("transition-opacity duration-300", visibleLines > i ? "opacity-100" : "opacity-0")}
-            style={{ color: gradient ? accent : accent }}
-          >
-            {gradient ? (
-              <span style={{
-                backgroundImage: `linear-gradient(90deg, ${accent}, ${gradient})`,
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}>{line}</span>
-            ) : line}
-          </div>
-        ))}
-        <div className={cn("transition-opacity duration-300", visibleLines > bannerLines.length ? "opacity-100" : "opacity-0")} style={{ color: fg }}>
-          &nbsp;
-        </div>
-        <div className={cn("transition-opacity duration-300", visibleLines > bannerLines.length + 1 ? "opacity-100" : "opacity-0")} style={{ color: accent }}>
-          ▶ RUNME
-        </div>
-        <div className={cn("transition-opacity duration-300", visibleLines > bannerLines.length + 2 ? "opacity-100" : "opacity-0")} style={{ color: muted }}>
-          &nbsp;
-        </div>
-        <div className={cn("transition-opacity duration-300", visibleLines > bannerLines.length + 3 ? "opacity-100" : "opacity-0")} style={{ color: muted }}>
-          ────────────────────────────────────────
-        </div>
-        {menuItems.map((item, i) => (
-          <div
-            key={i}
-            className={cn("transition-opacity duration-300", visibleLines > bannerLines.length + 4 + i ? "opacity-100" : "opacity-0")}
-            style={{ color: fg }}
-          >
-            {item}
-          </div>
-        ))}
-        <div className={cn("transition-opacity duration-300", visibleLines > bannerLines.length + 4 + menuItems.length ? "opacity-100" : "opacity-0")} style={{ color: muted }}>
-          ────────────────────────────────────────
-        </div>
-        <div className={cn("transition-opacity duration-300", visibleLines > bannerLines.length + 5 + menuItems.length ? "opacity-100" : "opacity-0")} style={{ color: fg }}>
-          <span style={{ color: accent }}>❯</span> _
-        </div>
+      <div className="p-3 space-y-0" style={{ transform: anim === "glitch" ? `translateX(${glitchOffset}px)` : undefined }}>
+        {allContent.map(renderLine)}
       </div>
     </div>
   );
