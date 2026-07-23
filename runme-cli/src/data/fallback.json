@@ -1,0 +1,96 @@
+{
+  "profile": {
+    "name": "Demo User",
+    "title": "Full Stack Developer",
+    "bio": "A passionate developer who loves building things for the web. Currently working on innovative projects that make a difference.",
+    "email": "demo@example.com",
+    "githubUrl": "https://github.com/demo",
+    "linkedinUrl": "https://linkedin.com/in/demo",
+    "portfolioUrl": "https://demo.dev",
+    "location": "San Francisco, CA",
+    "availableForHire": true,
+    "responseTime": "24 hours",
+    "timezone": "PST (UTC-8)"
+  },
+  "projects": [
+    {
+      "id": "1",
+      "title": "Project Alpha",
+      "subtitle": "A revolutionary web app",
+      "description": "Built a full-stack application using React and Node.js that helps developers manage their workflows efficiently.",
+      "tags": ["React", "Node.js", "PostgreSQL"],
+      "liveDemoUrl": "https://alpha.example.com",
+      "githubRepoUrl": "https://github.com/demo/alpha"
+    },
+    {
+      "id": "2",
+      "title": "Project Beta",
+      "subtitle": "Mobile-first experience",
+      "description": "Developed a cross-platform mobile app using React Native with real-time synchronization capabilities.",
+      "tags": ["React Native", "Firebase", "TypeScript"],
+      "liveDemoUrl": "https://beta.example.com",
+      "githubRepoUrl": "https://github.com/demo/beta"
+    }
+  ],
+  "experience": [
+    {
+      "id": "1",
+      "company": "Tech Corp",
+      "role": "Senior Developer",
+      "startDate": "2022-01",
+      "endDate": null,
+      "description": "Leading development of core platform features and mentoring junior developers.",
+      "location": "San Francisco, CA",
+      "isEducation": false
+    },
+    {
+      "id": "2",
+      "company": "Startup Inc",
+      "role": "Full Stack Developer",
+      "startDate": "2020-06",
+      "endDate": "2021-12",
+      "description": "Built and scaled microservices handling 10M+ requests per day.",
+      "location": "Remote",
+      "isEducation": false
+    },
+    {
+      "id": "3",
+      "company": "University of Technology",
+      "role": "B.S. Computer Science",
+      "startDate": "2016-09",
+      "endDate": "2020-05",
+      "description": "Graduated with honors. Focus on distributed systems and machine learning.",
+      "location": "San Francisco, CA",
+      "isEducation": true
+    }
+  ],
+  "skills": [
+    {
+      "id": "1",
+      "categoryName": "Frontend",
+      "description": "Building beautiful user interfaces",
+      "skills": ["React", "TypeScript", "Next.js", "Tailwind CSS", "Vue.js"],
+      "skillLevel": "expert"
+    },
+    {
+      "id": "2",
+      "categoryName": "Backend",
+      "description": "Scalable server-side applications",
+      "skills": ["Node.js", "Python", "Go", "PostgreSQL", "Redis"],
+      "skillLevel": "advanced"
+    },
+    {
+      "id": "3",
+      "categoryName": "DevOps",
+      "description": "Infrastructure and deployment",
+      "skills": ["Docker", "Kubernetes", "AWS", "CI/CD", "Terraform"],
+      "skillLevel": "intermediate"
+    }
+  ],
+  "theme": {
+    "lockedTheme": "cyberpunk",
+    "asciiBanner": null,
+    "bootAnimation": "typewriter",
+    "greeting": null
+  }
+}

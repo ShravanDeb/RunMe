@@ -1,0 +1,17 @@
+export const symbols = {
+  arrow: "→",
+  bullet: "•",
+  check: "✓",
+  cross: "✗",
+  star: "★",
+  heart: "♥",
+  diamond: "◆",
+  circle: "●",
+  square: "■",
+  triangle: "▲",
+  line: "─",
+  doubleLine: "═",
+  dottedLine: "┄",
+  corner: "╰",
+  tee: "├",
+};

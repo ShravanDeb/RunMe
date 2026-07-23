@@ -1,0 +1,41 @@
+{
+  "name": "@runme/cli",
+  "version": "1.0.0",
+  "description": "Display your portfolio in the terminal",
+  "main": "dist/index.js",
+  "bin": {
+    "runme": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "lint": "eslint src/"
+  },
+  "keywords": [
+    "portfolio",
+    "terminal",
+    "cli",
+    "developer"
+  ],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.18.1",
+    "chalk": "^5.6.2",
+    "cli-table3": "^0.6.5",
+    "commander": "^15.0.0",
+    "figlet": "^1.11.3",
+    "ora": "^9.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsup": "^8.5.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
