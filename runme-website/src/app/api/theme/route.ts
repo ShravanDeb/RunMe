@@ -31,7 +31,7 @@ export async function PUT(request: Request) {
     const body = await request.json();
 
     const themeData: Record<string, any> = { userId: decoded.userId, updatedAt: new Date() };
-    for (const key of ["lockedTheme", "customHexColor", "asciiBanner", "bootAnimation", "greeting"]) {
+    for (const key of ["lockedTheme", "customHexColor", "gradientColor", "asciiBanner", "bootAnimation", "greeting"]) {
       if (body[key] !== undefined) themeData[key] = body[key];
     }
 

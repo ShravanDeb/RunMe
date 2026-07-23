@@ -54,7 +54,7 @@ export default function SettingsPage() {
           </h2>
           <div className="bg-surface border border-border rounded-lg p-4">
             <code className="text-sm font-mono">
-              <span className="text-accent">npx @runme/</span>
+              <span className="text-accent">npx runme-cli </span>
               <span className="text-fg">{username || "..."}</span>
             </code>
             <p className="text-xs text-muted mt-2">

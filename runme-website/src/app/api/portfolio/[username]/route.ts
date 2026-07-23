@@ -43,6 +43,7 @@ export async function GET(
       skills: skillsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as PortfolioData["skills"][0])),
       theme: {
         lockedTheme: theme.lockedTheme || "cyberpunk", customHexColor: theme.customHexColor,
+        gradientColor: theme.gradientColor,
         asciiBanner: theme.asciiBanner, bootAnimation: theme.bootAnimation || "typewriter",
         greeting: theme.greeting,
       },

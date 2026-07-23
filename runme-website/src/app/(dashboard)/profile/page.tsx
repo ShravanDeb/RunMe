@@ -25,6 +25,7 @@ const defaultProfile: Profile = {
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile>(defaultProfile);
+  const [bannerText, setBannerText] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -32,6 +33,10 @@ export default function ProfilePage() {
     api.profile
       .get()
       .then((res) => setProfile({ ...defaultProfile, ...res }))
+      .catch(() => {});
+    api.theme
+      .get()
+      .then((res) => setBannerText(res.asciiBanner || ""))
       .catch(() => {});
   }, []);
 
@@ -41,6 +46,7 @@ export default function ProfilePage() {
     setSaved(false);
     try {
       await api.profile.update(profile);
+      await api.theme.update({ asciiBanner: bannerText });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {
@@ -104,6 +110,18 @@ export default function ProfilePage() {
           onChange={(v) => update("twitter", v)}
           placeholder="@yourhandle"
         />
+
+        <div className="pt-4 border-t border-border">
+          <p className="text-xs text-muted mb-4">
+            Customize the ASCII art banner shown in the terminal. Leave empty for default.
+          </p>
+          <Field
+            label="Banner text"
+            value={bannerText}
+            onChange={setBannerText}
+            placeholder="Run Me"
+          />
+        </div>
 
         <div className="flex items-center gap-3 pt-2">
           <button

@@ -43,6 +43,7 @@ export interface PortfolioData {
   theme: {
     lockedTheme: string;
     customHexColor?: string;
+    gradientColor?: string;
     asciiBanner?: string;
     bootAnimation?: string;
     greeting?: string;
