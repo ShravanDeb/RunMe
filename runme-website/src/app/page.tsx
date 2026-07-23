@@ -323,8 +323,8 @@ function LiveTerminal() {
   }, [phase]);
 
   useEffect(() => {
-    scrollBottom();
-  }, [headerLines, contentLines, welcomeText, scrollBottom]);
+    if (phase === "input") scrollBottom();
+  }, [headerLines, contentLines, welcomeText, scrollBottom, phase]);
 
   function processCommand(cmd: string) {
     const trimmed = cmd.trim().toLowerCase();
