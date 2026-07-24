@@ -1,41 +1,39 @@
-import chalk from "chalk";
 import { ThemeColors } from "../types/index.js";
 import { createThemeColors } from "../ui/colors.js";
 import { symbols } from "../ui/symbols.js";
 import axios from "axios";
+import { drawContentLine, drawEmptyLine, drawSectionHeader, drawSectionFooter, drawSeparator } from "../ui/box.js";
 
-const NPM_REGISTRY = "https://registry.npmjs.org/@runme/cli";
+const NPM_REGISTRY = "https://registry.npmjs.org/runme-cli";
 
 export async function checkForUpdates(currentVersion: string, theme: ThemeColors): Promise<void> {
-  const colors = createThemeColors(theme);
+  const c = createThemeColors(theme);
 
-  console.log();
-  console.log(colors.bold("  Check for Updates"));
-  console.log(colors.muted("  " + symbols.line.repeat(40)));
-  console.log();
+  const lines: string[] = [];
 
   try {
     const response = await axios.get(NPM_REGISTRY);
     const latestVersion = response.data["dist-tags"]?.latest;
 
     if (!latestVersion) {
-      console.log(colors.warning("  Could not determine latest version"));
-      console.log();
-      return;
-    }
-
-    if (currentVersion === latestVersion) {
-      console.log(`  ${colors.success(symbols.check)} You are using the latest version (${colors.fg(currentVersion)})`);
+      lines.push(drawContentLine(c.warning("Could not determine latest version"), theme));
+    } else if (currentVersion === latestVersion) {
+      lines.push(drawContentLine(`${c.success(symbols.check)} Latest version (${c.fg(currentVersion)})`, theme));
     } else {
-      console.log(`  ${colors.warning("Update available!")}`);
-      console.log(`  ${colors.dim("Current:")}  ${colors.fg(currentVersion)}`);
-      console.log(`  ${colors.dim("Latest:")}   ${colors.fg(latestVersion)}`);
-      console.log();
-      console.log(`  ${colors.accent("Update with:")} npm update -g @runme/cli`);
+      lines.push(drawContentLine(`${c.warning("Update available!")}`, theme));
+      lines.push(drawContentLine(`${c.dim("Current:")} ${c.fg(currentVersion)}`, theme));
+      lines.push(drawContentLine(`${c.dim("Latest:")}  ${c.fg(latestVersion)}`, theme));
+      lines.push(drawEmptyLine(theme));
+      lines.push(drawContentLine(`${c.accent("Update:")} npm update -g runme-cli`, theme));
     }
   } catch {
-    console.log(colors.warning("  Could not check for updates"));
+    lines.push(drawContentLine(c.warning("Could not check for updates"), theme));
   }
 
   console.log();
+  console.log(drawSectionHeader("Updates", theme));
+  for (const line of lines) {
+    console.log(line);
+  }
+  console.log(drawSectionFooter(theme));
 }

@@ -1,6 +1,6 @@
 {
   "name": "runme-cli",
-  "version": "1.0.4",
+  "version": "1.0.12",
   "description": "Display your portfolio in the terminal",
   "main": "dist/index.js",
   "bin": {

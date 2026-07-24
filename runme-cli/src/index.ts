@@ -1,11 +1,13 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { renderBanner, renderSmallBanner } from "./ui/banner.js";
-import { renderMenu, renderPrompt, defaultMenuItems } from "./ui/menu.js";
+import { renderMenu, renderPrompt, renderStatusBar, defaultMenuItems } from "./ui/menu.js";
 import { animateText } from "./ui/animations.js";
 import { getTheme, getThemeNames } from "./ui/themes.js";
+import { createThemeColors } from "./ui/colors.js";
 import { loadConfig, saveConfig } from "./services/config.service.js";
 import { fetchPortfolio } from "./services/portfolio.service.js";
+import { clearCache } from "./services/cache.service.js";
 import { showAbout } from "./commands/about.js";
 import { showProjects } from "./commands/projects.js";
 import { showExperience } from "./commands/experience.js";
@@ -20,7 +22,7 @@ import { checkForUpdates } from "./commands/update.js";
 import { ThemeName, AnimationType, ThemeColors, PortfolioData } from "./types/index.js";
 import readline from "readline";
 
-const VERSION = "1.0.0";
+const VERSION = "1.0.12";
 
 function resolveTheme(data: PortfolioData, localConfig: { theme?: string }): ThemeColors {
   const themeName = (localConfig.theme || data.theme?.lockedTheme || "cyberpunk") as ThemeName;
@@ -42,6 +44,7 @@ program
   .argument("[username]", "Portfolio username to display")
   .option("--theme <theme>", "Override theme")
   .option("--no-animation", "Disable boot animation")
+  .option("--refresh", "Clear cache and fetch fresh data")
   .action(async (username, options) => {
     const config = loadConfig();
 
@@ -59,6 +62,9 @@ program
     }
 
     try {
+      if (options.refresh && username) {
+        clearCache(username);
+      }
       const data = await fetchPortfolio(username);
 
       const theme = options.theme
@@ -71,18 +77,6 @@ program
       if (options.animation !== false && bootAnim) {
         await animateText(greeting, bootAnim, theme);
       }
-
-      const bannerText = data.theme?.asciiBanner || undefined;
-      console.log(renderBanner(bannerText, theme, data.theme?.gradientColor));
-      console.log();
-
-      if (options.animation !== false) {
-        await animateText(`Welcome to ${data.profile.name}'s portfolio`, "typewriter", theme);
-      }
-
-      console.log(renderSmallBanner(theme));
-      console.log(chalk.dim(`  ${data.profile.title}`));
-      console.log();
 
       startInteractiveMode(data, theme);
     } catch (error) {
@@ -135,6 +129,24 @@ program
   });
 
 program
+  .command("clear")
+  .description("Clear cached portfolio data")
+  .argument("[username]", "Username to clear cache for (clears all if omitted)")
+  .action((username) => {
+    const colors = createThemeColors(getTheme("cyberpunk"));
+    try {
+      clearCache(username);
+      const msg = username
+        ? `Cache cleared for ${username}`
+        : "All cached data cleared";
+      console.log(`\n  ${colors.success("✓")} ${colors.fg(msg)}\n`);
+    } catch {
+      const errColors = createThemeColors(getTheme("cyberpunk"));
+      console.log(`\n  ${errColors.error("✕")} Failed to clear cache\n`);
+    }
+  });
+
+program
   .command("doctor")
   .description("Run diagnostics")
   .action(async () => {
@@ -155,29 +167,59 @@ program
 program.parse();
 
 function clearScreen() {
-  process.stdout.write("\x1B[2J\x1B[0f");
+  console.clear();
 }
 
-function drawHeader(data: any, theme: any) {
+function drawHeader(data: PortfolioData, theme: ThemeColors) {
+  const c = createThemeColors(theme);
   const bannerText = data.theme?.asciiBanner || undefined;
   console.log(renderBanner(bannerText, theme, data.theme?.gradientColor));
   console.log();
-  console.log(renderSmallBanner(theme));
-  console.log(chalk.dim(`  ${data.profile.title}`));
+  const smallBanner = renderSmallBanner(theme);
+  const title = data.profile.title;
+  console.log(`  ${smallBanner}${title ? c.dim(` \u2500\u2500 ${title}`) : ""}`);
   console.log();
+  const greeting = data.theme?.greeting || `Welcome to ${data.profile.name}'s portfolio`;
+  console.log(`  ${c.accent(greeting)}`);
 }
 
-function startInteractiveMode(data: any, theme: any) {
+function startInteractiveMode(data: PortfolioData, theme: ThemeColors) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
 
-  const showMenu = () => {
-    renderMenu(defaultMenuItems, theme);
-    renderPrompt(theme);
+  process.on("SIGINT", () => {
+    console.log();
+    console.log(chalk.dim("  Thanks for visiting!"));
+    console.log();
+    rl.close();
+    process.exit(0);
+  });
 
-    rl.question("", async (answer) => {
+  rl.on("close", () => {
+    process.exit(0);
+  });
+
+  const renderFullView = () => {
+    clearScreen();
+    drawHeader(data, theme);
+    console.log();
+    renderMenu(defaultMenuItems, theme);
+    renderStatusBar(theme);
+    renderPrompt(theme);
+  };
+
+  const renderCommandView = () => {
+    clearScreen();
+    drawHeader(data, theme);
+    console.log();
+  };
+
+  const showMenu = () => {
+    renderFullView();
+
+    rl.question("", (answer) => {
       const trimmed = answer.trim().toLowerCase();
 
       if (trimmed === "quit" || trimmed === "exit" || trimmed === "q") {
@@ -189,11 +231,11 @@ function startInteractiveMode(data: any, theme: any) {
       }
 
       if (trimmed === "clear") {
-        clearScreen();
-        drawHeader(data, theme);
         showMenu();
         return;
       }
+
+      renderCommandView();
 
       const num = parseInt(trimmed);
       if (!isNaN(num) && num >= 1 && num <= defaultMenuItems.length) {
@@ -203,17 +245,23 @@ function startInteractiveMode(data: any, theme: any) {
         handleCommand(trimmed, data, theme);
       }
 
-      // Clear screen, redraw header, then show menu
-      clearScreen();
-      drawHeader(data, theme);
-      showMenu();
+      const colors = createThemeColors(theme);
+      console.log();
+      renderStatusBar(theme);
+      console.log();
+      process.stdout.write(`  ${colors.accent("\u25B8")} ${colors.fg("Press Enter to return to menu...")}`);
+
+
+      rl.question("", () => {
+        showMenu();
+      });
     });
   };
 
   showMenu();
 }
 
-function handleCommand(command: string, data: any, theme: any) {
+function handleCommand(command: string, data: PortfolioData, theme: ThemeColors) {
   switch (command) {
     case "about":
       showAbout(data, theme);

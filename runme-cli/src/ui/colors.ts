@@ -27,3 +27,23 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } {
       }
     : { r: 0, g: 0, b: 0 };
 }
+
+export function gradientText(
+  text: string,
+  fromHex: string,
+  toHex: string
+): string {
+  const from = hexToRgb(fromHex);
+  const to = hexToRgb(toHex);
+  const chars = text.split("");
+  return chars
+    .map((ch, i) => {
+      if (ch === " ") return ch;
+      const t = chars.length > 1 ? i / (chars.length - 1) : 0;
+      const r = Math.round(from.r + (to.r - from.r) * t);
+      const g = Math.round(from.g + (to.g - from.g) * t);
+      const b = Math.round(from.b + (to.b - from.b) * t);
+      return chalk.rgb(r, g, b)(ch);
+    })
+    .join("");
+}

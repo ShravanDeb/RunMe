@@ -1,52 +1,42 @@
-import chalk from "chalk";
 import { PortfolioData, ThemeColors } from "../types/index.js";
 import { createThemeColors } from "../ui/colors.js";
 import { symbols } from "../ui/symbols.js";
+import { drawContentLine, drawEmptyLine, drawSectionHeader, drawSectionFooter, drawSeparator } from "../ui/box.js";
 
 export function showContact(data: PortfolioData, theme: ThemeColors): void {
-  const colors = createThemeColors(theme);
+  const c = createThemeColors(theme);
   const { profile } = data;
 
-  console.log();
-  console.log(colors.bold("  Contact"));
-  console.log(colors.muted("  " + symbols.line.repeat(40)));
-  console.log();
+  const lines: string[] = [];
 
-  if (profile.email) {
-    console.log(`  ${colors.accent("Email:")}     ${colors.fg(profile.email)}`);
+  if (profile.email) lines.push(drawContentLine(`${c.accent("Email:")}    ${c.fg(profile.email)}`, theme));
+  if (profile.phone) lines.push(drawContentLine(`${c.accent("Phone:")}    ${c.fg(profile.phone)}`, theme));
+  if (profile.github) lines.push(drawContentLine(`${c.accent("GitHub:")}   ${c.fg(profile.github)}`, theme));
+  if (profile.linkedinUrl) lines.push(drawContentLine(`${c.accent("LinkedIn:")} ${c.fg(profile.linkedinUrl)}`, theme));
+  if (profile.portfolioUrl) lines.push(drawContentLine(`${c.accent("Website:")}  ${c.fg(profile.portfolioUrl)}`, theme));
+  if (profile.timezone) lines.push(drawContentLine(`${c.accent("Timezone:")} ${c.fg(profile.timezone)}`, theme));
+
+  if (lines.length > 0 && (profile.availableForHire !== undefined || profile.responseTime)) {
+    lines.push(drawSeparator(theme));
   }
-
-  if (profile.phone) {
-    console.log(`  ${colors.accent("Phone:")}     ${colors.fg(profile.phone)}`);
-  }
-
-  if (profile.githubUrl) {
-    console.log(`  ${colors.accent("GitHub:")}    ${colors.fg(profile.githubUrl)}`);
-  }
-
-  if (profile.linkedinUrl) {
-    console.log(`  ${colors.accent("LinkedIn:")}  ${colors.fg(profile.linkedinUrl)}`);
-  }
-
-  if (profile.portfolioUrl) {
-    console.log(`  ${colors.accent("Portfolio:")} ${colors.fg(profile.portfolioUrl)}`);
-  }
-
-  if (profile.timezone) {
-    console.log(`  ${colors.accent("Timezone:")} ${colors.fg(profile.timezone)}`);
-  }
-
-  console.log();
-  console.log(colors.muted("  " + symbols.line.repeat(40)));
 
   if (profile.availableForHire) {
-    console.log(`  ${colors.success("✓ Available for hire")}`);
+    lines.push(drawContentLine(`${c.success(symbols.check)} ${c.success("Available for hire")}`, theme));
     if (profile.responseTime) {
-      console.log(`    ${colors.dim("Typical response time: " + profile.responseTime)}`);
+      lines.push(drawContentLine(`  ${c.dim("Response: " + profile.responseTime)}`, theme));
     }
-  } else {
-    console.log(`  ${colors.muted("Not available for hire at this time")}`);
+  } else if (profile.availableForHire === false) {
+    lines.push(drawContentLine(`${c.muted("Not available for hire at this time")}`, theme));
+  }
+
+  if (lines.length === 0) {
+    lines.push(drawContentLine(c.muted("No contact info to display"), theme));
   }
 
   console.log();
+  console.log(drawSectionHeader("Contact", theme));
+  for (const line of lines) {
+    console.log(line);
+  }
+  console.log(drawSectionFooter(theme));
 }

@@ -1,57 +1,61 @@
-import chalk from "chalk";
 import { PortfolioData, ThemeColors } from "../types/index.js";
 import { createThemeColors } from "../ui/colors.js";
 import { symbols } from "../ui/symbols.js";
+import { drawContentLine, drawEmptyLine, drawSectionHeader, drawSectionFooter, drawSeparator } from "../ui/box.js";
 
 export function showAbout(data: PortfolioData, theme: ThemeColors): void {
-  const colors = createThemeColors(theme);
+  const c = createThemeColors(theme);
   const { profile } = data;
 
-  console.log();
-  console.log(colors.bold("  About Me"));
-  console.log(colors.muted("  " + symbols.line.repeat(40)));
-  console.log();
+  const lines: string[] = [];
 
-  console.log(`  ${colors.accent("Name:")}        ${colors.fg(profile.name)}`);
-  console.log(`  ${colors.accent("Title:")}       ${colors.fg(profile.title)}`);
-  console.log();
+  lines.push(drawContentLine(`${c.bold(profile.name)}`, theme));
+
+  if (profile.title) {
+    lines.push(drawContentLine(`${c.muted(profile.title)}`, theme));
+  }
 
   if (profile.bio) {
-    console.log(`  ${colors.accent("Bio:")}`);
+    lines.push(drawEmptyLine(theme));
     const words = profile.bio.split(" ");
-    let line = "    ";
+    let line = "";
     for (const word of words) {
-      if (line.length + word.length > 50) {
-        console.log(colors.fg(line));
-        line = "    " + word + " ";
+      if ((line + " " + word).trim().length > 38) {
+        lines.push(drawContentLine(c.fg(line.trim()), theme));
+        line = word;
       } else {
-        line += word + " ";
+        line += (line ? " " : "") + word;
       }
     }
     if (line.trim()) {
-      console.log(colors.fg(line));
+      lines.push(drawContentLine(c.fg(line.trim()), theme));
     }
   }
 
-  console.log();
-  console.log(colors.muted("  " + symbols.line.repeat(40)));
+  if (profile.location || profile.timezone || profile.availableForHire !== undefined) {
+    lines.push(drawSeparator(theme));
+  }
 
   if (profile.location) {
-    console.log(`  ${symbols.pin || "📍"} ${colors.fg(profile.location)}`);
+    lines.push(drawContentLine(`${c.muted(symbols.pin)} ${c.fg(profile.location)}`, theme));
   }
-
   if (profile.timezone) {
-    console.log(`  ${symbols.pin || "🕐"} ${colors.fg(profile.timezone)}`);
+    lines.push(drawContentLine(`${c.muted(symbols.clock)} ${c.fg(profile.timezone)}`, theme));
   }
-
-  if (profile.availableForHire) {
-    console.log(`  ${symbols.check} ${colors.success("Available for hire")}`);
-    if (profile.responseTime) {
-      console.log(`    ${colors.dim("Response time: " + profile.responseTime)}`);
-    }
-  } else {
-    console.log(`  ${symbols.cross} ${colors.error("Not available for hire")}`);
+  if (profile.availableForHire !== undefined) {
+    const hireStatus = profile.availableForHire
+      ? `${c.success(symbols.check)} ${c.success("Available for hire")}`
+      : `${c.error(symbols.cross)} ${c.error("Not available")}`;
+    lines.push(drawContentLine(hireStatus, theme));
+  }
+  if (profile.responseTime) {
+    lines.push(drawContentLine(`${c.dim("Response: " + profile.responseTime)}`, theme));
   }
 
   console.log();
+  console.log(drawSectionHeader("About Me", theme));
+  for (const line of lines) {
+    console.log(line);
+  }
+  console.log(drawSectionFooter(theme));
 }

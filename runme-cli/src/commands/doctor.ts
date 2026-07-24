@@ -1,79 +1,62 @@
-import chalk from "chalk";
 import { ThemeColors } from "../types/index.js";
 import { createThemeColors } from "../ui/colors.js";
 import { symbols } from "../ui/symbols.js";
 import { loadConfig } from "../services/config.service.js";
 import axios from "axios";
+import { drawContentLine, drawEmptyLine, drawSectionHeader, drawSectionFooter, drawSeparator } from "../ui/box.js";
 
 const API_BASE_URL = process.env.RUNME_API_URL || "https://run-me-rose.vercel.app";
 
 export async function runDoctor(theme: ThemeColors): Promise<void> {
-  const colors = createThemeColors(theme);
+  const c = createThemeColors(theme);
 
-  console.log();
-  console.log(colors.bold("  Doctor"));
-  console.log(colors.muted("  " + symbols.line.repeat(40)));
-  console.log();
+  const lines: string[] = [];
 
   const checks: { name: string; status: boolean; message: string }[] = [];
 
-  // Check Node.js version
   const nodeVersion = process.version;
   const nodeMajor = parseInt(nodeVersion.slice(1));
   checks.push({
-    name: "Node.js version",
+    name: "Node.js",
     status: nodeMajor >= 18,
-    message: nodeVersion + (nodeMajor >= 18 ? "" : " (requires >= 18.0.0)"),
+    message: nodeVersion + (nodeMajor >= 18 ? "" : " (requires >= 18)"),
   });
 
-  // Check config
   const config = loadConfig();
   checks.push({
-    name: "Config file",
+    name: "Config",
     status: true,
-    message: config.username ? `Logged in as ${config.username}` : "Not logged in",
+    message: config.username ? `User: ${config.username}` : "Not logged in",
   });
 
-  // Check API connectivity
   try {
     await axios.get(`${API_BASE_URL}/health`, { timeout: 5000 });
-    checks.push({
-      name: "API connection",
-      status: true,
-      message: "Connected",
-    });
+    checks.push({ name: "API", status: true, message: "Connected" });
   } catch {
-    checks.push({
-      name: "API connection",
-      status: false,
-      message: "Cannot reach API server",
-    });
+    checks.push({ name: "API", status: false, message: "Cannot reach server" });
   }
 
-  // Check npm
-  checks.push({
-    name: "npm",
-    status: true,
-    message: "Available",
-  });
+  checks.push({ name: "npm", status: true, message: "Available" });
 
-  // Display results
-  checks.forEach((check) => {
-    const status = check.status
-      ? colors.success(symbols.check)
-      : colors.error(symbols.cross);
-    console.log(`  ${status} ${colors.fg(check.name)}: ${colors.dim(check.message)}`);
-  });
-
-  console.log();
-  console.log(colors.muted("  " + symbols.line.repeat(40)));
-
-  const allPassed = checks.every((c) => c.status);
-  if (allPassed) {
-    console.log(`  ${colors.success("All checks passed!")}`);
-  } else {
-    console.log(`  ${colors.warning("Some checks failed. Please fix the issues above.")}`);
+  for (const check of checks) {
+    const icon = check.status ? c.success(symbols.check) : c.error(symbols.cross);
+    lines.push(drawContentLine(`${icon} ${c.fg(check.name.padEnd(8))} ${c.dim(check.message)}`, theme));
   }
 
+  lines.push(drawSeparator(theme));
+
+  const allPassed = checks.every((ch) => ch.status);
+  lines.push(
+    drawContentLine(
+      allPassed ? c.success("All checks passed!") : c.warning("Some checks failed"),
+      theme
+    )
+  );
+
   console.log();
+  console.log(drawSectionHeader("Doctor", theme));
+  for (const line of lines) {
+    console.log(line);
+  }
+  console.log(drawSectionFooter(theme));
 }
