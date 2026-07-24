@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 interface Exp {
   id: string;
   company: string;
-  role: string;
+  position: string;
   description: string;
   startDate: string;
   endDate: string;
@@ -18,7 +18,7 @@ export default function ExperiencePage() {
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({
     company: "",
-    role: "",
+    position: "",
     description: "",
     startDate: "",
     endDate: "",
@@ -27,19 +27,29 @@ export default function ExperiencePage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.experience.list().then(setItems).catch(() => {});
+    api.experience.list().then((data: any[]) => {
+      setItems(data.map((e) => ({
+        id: e.id,
+        company: e.company || "",
+        position: e.position || "",
+        description: e.description || "",
+        startDate: e.startDate || "",
+        endDate: e.endDate || "",
+        current: e.current || false,
+      })));
+    }).catch((err) => console.error("Failed to load experience:", err));
   }, []);
 
   function startAdd() {
     setEditing("new");
-    setForm({ company: "", role: "", description: "", startDate: "", endDate: "", current: false });
+    setForm({ company: "", position: "", description: "", startDate: "", endDate: "", current: false });
   }
 
   function startEdit(e: Exp) {
     setEditing(e.id);
     setForm({
       company: e.company,
-      role: e.role,
+      position: e.position,
       description: e.description,
       startDate: e.startDate,
       endDate: e.endDate,
@@ -50,12 +60,13 @@ export default function ExperiencePage() {
   async function handleSave() {
     setSaving(true);
     try {
+      const data = { ...form };
       if (editing === "new") {
-        const res = await api.experience.create(form);
-        setItems((prev) => [...prev, res]);
+        const res = await api.experience.create(data);
+        setItems((prev) => [...prev, { ...data, id: res.id }]);
       } else {
-        await api.experience.update(editing, form);
-        setItems((prev) => prev.map((e) => (e.id === editing ? { ...e, ...form } : e)));
+        await api.experience.update(editing, data);
+        setItems((prev) => prev.map((e) => (e.id === editing ? { ...e, ...data } : e)));
       }
       setEditing(null);
     } catch {
@@ -101,9 +112,9 @@ export default function ExperiencePage() {
             />
             <input
               type="text"
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              placeholder="Role"
+              value={form.position}
+              onChange={(e) => setForm({ ...form, position: e.target.value })}
+              placeholder="Position"
               className={input}
             />
           </div>
@@ -149,7 +160,7 @@ export default function ExperiencePage() {
           <div className="flex gap-2 pt-1">
             <button
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || !form.company.trim() || !form.position.trim() || !form.startDate.trim()}
               className="bg-fg text-bg px-4 py-1.5 rounded-md text-sm font-medium hover:bg-fg/90 transition-colors disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save"}
@@ -171,7 +182,7 @@ export default function ExperiencePage() {
             className="bg-surface border border-border rounded-lg p-4 flex items-start justify-between"
           >
             <div className="min-w-0">
-              <span className="font-medium text-sm">{e.role}</span>
+              <span className="font-medium text-sm">{e.position}</span>
               <span className="text-muted text-sm"> at {e.company}</span>
               <p className="text-xs text-muted mt-1">
                 {e.startDate} — {e.current ? "Present" : e.endDate}

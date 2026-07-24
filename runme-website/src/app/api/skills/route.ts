@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
   try {
     const db = getDb();
-    const snapshot = await db.collection("skills").where("userId", "==", decoded.userId).orderBy("displayOrder").get();
+    const snapshot = await db.collection("skills").where("userId", "==", decoded.userId).get();
     const skills = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     return NextResponse.json(skills);
   } catch {

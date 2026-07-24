@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
   try {
     const db = getDb();
-    const snapshot = await db.collection("experience").where("userId", "==", decoded.userId).orderBy("displayOrder").get();
+    const snapshot = await db.collection("experience").where("userId", "==", decoded.userId).get();
     const items = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     return NextResponse.json(items);
   } catch {
@@ -28,14 +28,14 @@ export async function POST(request: Request) {
 
   try {
     const db = getDb();
-    const { company, role, startDate, endDate, description, location, isEducation } = await request.json();
+    const { company, position, startDate, endDate, current, description, location, isEducation } = await request.json();
 
-    if (!company || !role || !startDate) {
-      return NextResponse.json({ error: "Company, role, and start date are required" }, { status: 400 });
+    if (!company || !position || !startDate) {
+      return NextResponse.json({ error: "Company, position, and start date are required" }, { status: 400 });
     }
 
     const expData = {
-      userId: decoded.userId, company, role, startDate, endDate: endDate || "",
+      userId: decoded.userId, company, position, startDate, endDate: current ? "" : (endDate || ""),
       description: description || "", location: location || "", isEducation: isEducation || false,
       displayOrder: 0, createdAt: new Date(), updatedAt: new Date(),
     };

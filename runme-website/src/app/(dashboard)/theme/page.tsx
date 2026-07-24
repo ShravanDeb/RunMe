@@ -21,7 +21,7 @@ const ANIMATIONS = [
 
 interface ThemeConfig {
   lockedTheme: string;
-  animation: string;
+  bootAnimation: string;
   customHexColor: string;
   gradientColor: string;
   asciiBanner: string;
@@ -99,7 +99,7 @@ function ThemePreview({ config }: { config: ThemeConfig }) {
   const muted = theme.muted;
   const bg = theme.bg;
   const bannerLines = useMemo(() => generateAscii(config.asciiBanner || BANNER_TEXT), [config.asciiBanner]);
-  const anim = config.animation;
+  const anim = config.bootAnimation;
 
   const totalLines = bannerLines.length + 5 + 7;
   const [tick, setTick] = useState(0);
@@ -360,7 +360,7 @@ function ThemePreview({ config }: { config: ThemeConfig }) {
 export default function ThemePage() {
   const [config, setConfig] = useState<ThemeConfig>({
     lockedTheme: "cyberpunk",
-    animation: "typewriter",
+    bootAnimation: "typewriter",
     customHexColor: "",
     gradientColor: "",
     asciiBanner: "",
@@ -371,8 +371,8 @@ export default function ThemePage() {
   useEffect(() => {
     api.theme
       .get()
-      .then((res) => setConfig({ ...config, ...res }))
-      .catch(() => {});
+      .then((res) => setConfig((prev) => ({ ...prev, ...res })))
+      .catch((err) => console.error("Failed to load theme:", err));
   }, []);
 
   async function handleSave() {
@@ -498,10 +498,10 @@ export default function ThemePage() {
               {ANIMATIONS.map((a) => (
                 <button
                   key={a}
-                  onClick={() => setConfig({ ...config, animation: a })}
+                  onClick={() => setConfig({ ...config, bootAnimation: a })}
                   className={cn(
                     "border rounded-md px-3 py-2 text-sm text-left transition-colors font-mono",
-                    config.animation === a
+                    config.bootAnimation === a
                       ? "border-accent bg-accent/5 text-fg"
                       : "border-border text-muted hover:text-fg hover:border-muted"
                   )}

@@ -5,7 +5,8 @@ import { api } from "@/lib/api";
 
 interface Project {
   id: string;
-  name: string;
+  title: string;
+  subtitle: string;
   description: string;
   url: string;
   tags: string[];
@@ -15,22 +16,33 @@ interface Project {
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [editing, setEditing] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", description: "", url: "", tags: "", featured: false });
+  const [form, setForm] = useState({ title: "", subtitle: "", description: "", url: "", tags: "", featured: false });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.projects.list().then(setProjects).catch(() => {});
+    api.projects.list().then((data: any[]) => {
+      setProjects(data.map((p) => ({
+        id: p.id,
+        title: p.title || "",
+        subtitle: p.subtitle || "",
+        description: p.description || "",
+        url: p.githubRepoUrl || p.liveDemoUrl || "",
+        tags: p.tags || [],
+        featured: p.featured || false,
+      })));
+    }).catch((err) => console.error("Failed to load projects:", err));
   }, []);
 
   function startAdd() {
     setEditing("new");
-    setForm({ name: "", description: "", url: "", tags: "", featured: false });
+    setForm({ title: "", subtitle: "", description: "", url: "", tags: "", featured: false });
   }
 
   function startEdit(p: Project) {
     setEditing(p.id);
     setForm({
-      name: p.name,
+      title: p.title,
+      subtitle: p.subtitle,
       description: p.description,
       url: p.url,
       tags: p.tags.join(", "),
@@ -41,21 +53,28 @@ export default function ProjectsPage() {
   async function handleSave() {
     setSaving(true);
     const data = {
-      ...form,
-      tags: form.tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
+      title: form.title,
+      subtitle: form.subtitle,
+      description: form.description,
+      githubRepoUrl: form.url,
+      tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      featured: form.featured,
     };
     try {
       if (editing === "new") {
         const res = await api.projects.create(data);
-        setProjects((prev) => [...prev, res]);
+        setProjects((prev) => [...prev, {
+          id: res.id, title: data.title, subtitle: data.subtitle,
+          description: data.description, url: data.githubRepoUrl,
+          tags: data.tags, featured: data.featured,
+        }]);
       } else {
         await api.projects.update(editing, data);
-        setProjects((prev) =>
-          prev.map((p) => (p.id === editing ? { ...p, ...data } : p))
-        );
+        setProjects((prev) => prev.map((p) => (p.id === editing ? {
+          ...p, title: data.title, subtitle: data.subtitle,
+          description: data.description, url: data.githubRepoUrl,
+          tags: data.tags, featured: data.featured,
+        } : p)));
       }
       setEditing(null);
     } catch {
@@ -93,9 +112,16 @@ export default function ProjectsPage() {
         <div className="bg-surface border border-border rounded-lg p-4 mb-6 space-y-3">
           <input
             type="text"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
             placeholder="Project name"
+            className={input}
+          />
+          <input
+            type="text"
+            value={form.subtitle}
+            onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
+            placeholder="Short subtitle (optional)"
             className={input}
           />
           <textarea
@@ -131,7 +157,7 @@ export default function ProjectsPage() {
           <div className="flex gap-2 pt-1">
             <button
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || !form.title.trim()}
               className="bg-fg text-bg px-4 py-1.5 rounded-md text-sm font-medium hover:bg-fg/90 transition-colors disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save"}
@@ -154,13 +180,14 @@ export default function ProjectsPage() {
           >
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-medium text-sm">{p.name}</span>
+                <span className="font-medium text-sm">{p.title}</span>
                 {p.featured && (
                   <span className="text-xs text-accent bg-accent/10 px-1.5 py-0.5 rounded">
                     featured
                   </span>
                 )}
               </div>
+              {p.subtitle && <p className="text-xs text-muted mt-1">{p.subtitle}</p>}
               <p className="text-xs text-muted mt-1 line-clamp-2">{p.description}</p>
               {p.tags.length > 0 && (
                 <div className="flex gap-1.5 mt-2 flex-wrap">

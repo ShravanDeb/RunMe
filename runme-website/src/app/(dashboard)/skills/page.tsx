@@ -3,32 +3,71 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
-interface Skill {
+interface SkillCategory {
   id: string;
-  name: string;
-  category: string;
-  level: "beginner" | "intermediate" | "advanced" | "expert";
+  categoryName: string;
+  description: string;
+  skills: string[];
+  skillLevel: "beginner" | "intermediate" | "advanced" | "expert";
 }
 
-const LEVELS: Skill["level"][] = ["beginner", "intermediate", "advanced", "expert"];
+const LEVELS: SkillCategory["skillLevel"][] = ["beginner", "intermediate", "advanced", "expert"];
 
 export default function SkillsPage() {
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [form, setForm] = useState({ name: "", category: "", level: "intermediate" as Skill["level"] });
+  const [categories, setCategories] = useState<SkillCategory[]>([]);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    categoryName: "",
+    description: "",
+    skills: "",
+    skillLevel: "intermediate" as SkillCategory["skillLevel"],
+  });
   const [saving, setSaving] = useState(false);
-  const [filter, setFilter] = useState("");
 
   useEffect(() => {
-    api.skills.list().then(setSkills).catch(() => {});
+    api.skills.list().then((data: any[]) => {
+      setCategories(data.map((c) => ({
+        id: c.id,
+        categoryName: c.categoryName || "",
+        description: c.description || "",
+        skills: c.skills || [],
+        skillLevel: c.skillLevel || "intermediate",
+      })));
+    }).catch((err) => console.error("Failed to load skills:", err));
   }, []);
 
-  async function handleAdd() {
-    if (!form.name.trim()) return;
+  function startAdd() {
+    setEditing("new");
+    setForm({ categoryName: "", description: "", skills: "", skillLevel: "intermediate" });
+  }
+
+  function startEdit(c: SkillCategory) {
+    setEditing(c.id);
+    setForm({
+      categoryName: c.categoryName,
+      description: c.description,
+      skills: c.skills.join(", "),
+      skillLevel: c.skillLevel,
+    });
+  }
+
+  async function handleSave() {
     setSaving(true);
+    const data = {
+      categoryName: form.categoryName,
+      description: form.description,
+      skills: form.skills.split(",").map((s) => s.trim()).filter(Boolean),
+      skillLevel: form.skillLevel,
+    };
     try {
-      const res = await api.skills.create(form);
-      setSkills((prev) => [...prev, res]);
-      setForm({ name: "", category: form.category, level: "intermediate" });
+      if (editing === "new") {
+        const res = await api.skills.create(data);
+        setCategories((prev) => [...prev, { ...data, id: res.id }]);
+      } else {
+        await api.skills.update(editing, data);
+        setCategories((prev) => prev.map((c) => (c.id === editing ? { ...c, ...data } : c)));
+      }
+      setEditing(null);
     } catch {
     } finally {
       setSaving(false);
@@ -38,127 +77,134 @@ export default function SkillsPage() {
   async function handleDelete(id: string) {
     try {
       await api.skills.delete(id);
-      setSkills((prev) => prev.filter((s) => s.id !== id));
+      setCategories((prev) => prev.filter((c) => c.id !== id));
     } catch {}
   }
 
-  const categories = [...new Set(skills.map((s) => s.category).filter(Boolean))];
-  const filtered = filter
-    ? skills.filter((s) => s.category === filter)
-    : skills;
-
   const input =
-    "bg-surface border border-border rounded-md px-3 py-2 text-sm text-fg placeholder:text-muted/50 focus:outline-none focus:border-accent transition-colors";
+    "w-full bg-surface border border-border rounded-md px-3 py-2 text-sm text-fg placeholder:text-muted/50 focus:outline-none focus:border-accent transition-colors";
 
   return (
     <div className="max-w-xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight mb-1">Skills</h1>
-        <p className="text-sm text-muted">What you know. Grouped by category.</p>
-      </div>
-
-      <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-          placeholder="Skill name"
-          className={input + " flex-1"}
-        />
-        <input
-          type="text"
-          value={form.category}
-          onChange={(e) => setForm({ ...form, category: e.target.value })}
-          placeholder="Category"
-          className={input + " w-32"}
-        />
-        <select
-          value={form.level}
-          onChange={(e) => setForm({ ...form, level: e.target.value as Skill["level"] })}
-          className={input + " w-32"}
-        >
-          {LEVELS.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight mb-1">Skills</h1>
+          <p className="text-sm text-muted">Grouped by category.</p>
+        </div>
         <button
-          onClick={handleAdd}
-          disabled={saving || !form.name.trim()}
-          className="bg-fg text-bg px-3 py-2 rounded-md text-sm font-medium hover:bg-fg/90 transition-colors disabled:opacity-50 shrink-0"
+          onClick={startAdd}
+          className="bg-surface border border-border px-3 py-1.5 rounded-md text-sm text-fg hover:bg-border transition-colors"
         >
-          Add
+          + Add Category
         </button>
       </div>
 
-      {categories.length > 0 && (
-        <div className="flex gap-1.5 mb-4 flex-wrap">
-          <button
-            onClick={() => setFilter("")}
-            className={`text-xs px-2 py-1 rounded-md transition-colors ${
-              filter === "" ? "bg-surface text-fg" : "text-muted hover:text-fg"
-            }`}
-          >
-            All ({skills.length})
-          </button>
-          {categories.map((c) => (
-            <button
-              key={c}
-              onClick={() => setFilter(c === filter ? "" : c)}
-              className={`text-xs px-2 py-1 rounded-md transition-colors ${
-                filter === c ? "bg-surface text-fg" : "text-muted hover:text-fg"
-              }`}
+      {editing && (
+        <div className="bg-surface border border-border rounded-lg p-4 mb-6 space-y-3">
+          <input
+            type="text"
+            value={form.categoryName}
+            onChange={(e) => setForm({ ...form, categoryName: e.target.value })}
+            placeholder="Category name (e.g. Languages, Frameworks)"
+            className={input}
+          />
+          <textarea
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="Optional description"
+            rows={2}
+            className={input + " resize-none"}
+          />
+          <input
+            type="text"
+            value={form.skills}
+            onChange={(e) => setForm({ ...form, skills: e.target.value })}
+            placeholder="Skills (comma-separated): TypeScript, React, Node.js"
+            className={input}
+          />
+          <div>
+            <label className="block text-xs text-muted mb-1">Skill level</label>
+            <select
+              value={form.skillLevel}
+              onChange={(e) => setForm({ ...form, skillLevel: e.target.value as SkillCategory["skillLevel"] })}
+              className={input}
             >
-              {c} ({skills.filter((s) => s.category === c).length})
+              {LEVELS.map((l) => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleSave}
+              disabled={saving || !form.categoryName.trim()}
+              className="bg-fg text-bg px-4 py-1.5 rounded-md text-sm font-medium hover:bg-fg/90 transition-colors disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save"}
             </button>
-          ))}
+            <button
+              onClick={() => setEditing(null)}
+              className="text-sm text-muted hover:text-fg transition-colors px-3 py-1.5"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
-      <div className="space-y-1">
-        {filtered.map((s) => (
+      <div className="space-y-3">
+        {categories.map((c) => (
           <div
-            key={s.id}
-            className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-surface/50 transition-colors group"
+            key={c.id}
+            className="bg-surface border border-border rounded-lg p-4"
           >
-            <div className="flex items-center gap-3">
-              <span className="text-sm">{s.name}</span>
-              {s.category && (
-                <span className="text-xs text-muted bg-bg border border-border px-1.5 py-0.5 rounded">
-                  {s.category}
-                </span>
-              )}
-              <span className={`text-xs ${levelColor(s.level)}`}>{s.level}</span>
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm">{c.categoryName}</span>
+                  <span className={`text-xs ${
+                    c.skillLevel === "expert" ? "text-accent" :
+                    c.skillLevel === "advanced" ? "text-success" :
+                    "text-muted"
+                  }`}>{c.skillLevel}</span>
+                </div>
+                {c.description && <p className="text-xs text-muted mt-1">{c.description}</p>}
+              </div>
+              <div className="flex gap-1 ml-4 shrink-0">
+                <button
+                  onClick={() => startEdit(c)}
+                  className="text-xs text-muted hover:text-fg px-2 py-1 transition-colors"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(c.id)}
+                  className="text-xs text-muted hover:text-error px-2 py-1 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-            <button
-              onClick={() => handleDelete(s.id)}
-              className="text-xs text-muted hover:text-error opacity-0 group-hover:opacity-100 transition-all px-2 py-1"
-            >
-              Delete
-            </button>
+            {c.skills.length > 0 && (
+              <div className="flex gap-1.5 flex-wrap">
+                {c.skills.map((s) => (
+                  <span
+                    key={s}
+                    className="text-xs text-muted bg-bg border border-border px-1.5 py-0.5 rounded"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         ))}
-        {filtered.length === 0 && (
+        {categories.length === 0 && !editing && (
           <p className="text-sm text-muted text-center py-12">
-            {filter ? "No skills in this category." : "No skills yet. Add one above."}
+            No skill categories yet. Add one above.
           </p>
         )}
       </div>
     </div>
   );
-}
-
-function levelColor(level: string) {
-  switch (level) {
-    case "expert":
-      return "text-accent";
-    case "advanced":
-      return "text-success";
-    case "intermediate":
-      return "text-muted";
-    default:
-      return "text-muted/60";
-  }
 }

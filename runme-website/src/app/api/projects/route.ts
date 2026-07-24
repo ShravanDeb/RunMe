@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
   try {
     const db = getDb();
-    const snapshot = await db.collection("projects").where("userId", "==", decoded.userId).orderBy("displayOrder").get();
+    const snapshot = await db.collection("projects").where("userId", "==", decoded.userId).get();
     const projects = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     return NextResponse.json(projects);
   } catch {
@@ -28,14 +28,14 @@ export async function POST(request: Request) {
 
   try {
     const db = getDb();
-    const { title, subtitle, description, tags, liveDemoUrl, githubRepoUrl, projectColor } = await request.json();
+    const { title, subtitle, description, tags, liveDemoUrl, githubRepoUrl, projectColor, featured } = await request.json();
 
     if (!title) return NextResponse.json({ error: "Title is required" }, { status: 400 });
 
     const projectData = {
       userId: decoded.userId, title, subtitle: subtitle || "", description: description || "",
       tags: tags || [], liveDemoUrl: liveDemoUrl || "", githubRepoUrl: githubRepoUrl || "",
-      projectColor: projectColor || "", displayOrder: 0, createdAt: new Date(), updatedAt: new Date(),
+      projectColor: projectColor || "", featured: featured || false, displayOrder: 0, createdAt: new Date(), updatedAt: new Date(),
     };
 
     const docRef = await db.collection("projects").add(projectData);

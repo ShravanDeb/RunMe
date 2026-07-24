@@ -44,7 +44,7 @@ export default function JourneyPage() {
       .then((data: any[]) => {
         const mapped = data.map((e) => ({
           id: e.id,
-          title: `${e.role} at ${e.company}`,
+          title: `${e.position} at ${e.company}`,
           description: e.description || "",
           date: e.startDate || "",
           type: "job" as const,
@@ -52,7 +52,7 @@ export default function JourneyPage() {
         mapped.sort((a, b) => (a.date > b.date ? -1 : 1));
         setMilestones(mapped);
       })
-      .catch(() => {});
+      .catch((err) => console.error("Failed to load experience:", err));
   }, []);
 
   function startAdd() {

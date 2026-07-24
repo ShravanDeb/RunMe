@@ -32,10 +32,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 400 });
     }
 
-    const token = await signToken({ userId: user.id });
+    const token = await signToken({ userId: userDoc.id });
 
     return NextResponse.json({
-      user: { id: user.id, username: user.username, email: user.email },
+      user: { id: userDoc.id, username: user.username, email: user.email },
       token,
     });
   } catch (error: any) {

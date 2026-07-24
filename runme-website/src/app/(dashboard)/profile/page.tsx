@@ -34,8 +34,8 @@ export default function ProfilePage() {
 
   useEffect(() => {
     Promise.all([
-      api.profile.get().catch(() => null),
-      api.theme.get().catch(() => null),
+      api.profile.get().catch((err) => { console.error("Failed to load profile:", err); return null; }),
+      api.theme.get().catch((err) => { console.error("Failed to load theme:", err); return null; }),
     ]).then(([profileRes, themeRes]) => {
       if (profileRes) {
         setProfile({
@@ -61,8 +61,8 @@ export default function ProfilePage() {
     setSaving(true);
     setSaved(false);
     try {
-      await api.profile.update(profile);
       await api.theme.update({ asciiBanner: bannerText });
+      await api.profile.update(profile).catch((err) => console.error("Failed to save profile:", err));
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {
